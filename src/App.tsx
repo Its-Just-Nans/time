@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import TimeDisplayer from "./TimeDisplayer";
 
 import "./App.css";
@@ -6,20 +6,22 @@ import "./App.css";
 const App = () => {
     const [selectedTimeZone, setSelectedTimeZone] = useState("");
     const [timeZones, setTimeZones] = useState([]);
-    const [savedTimeZones, setSavedTimeZones] = useState([]);
+    const [savedTimeZones, setSavedTimeZones] = useState<string[]>([]);
     const [date, setDate] = useState(new Date());
 
     useEffect(() => {
         // Get all supported time zones using Intl API
+        // @ts-expect-error
+        // Intl.supportedValuesOf is not yet supported by TypeScript
         const allTimeZones = Intl.supportedValuesOf("timeZone");
         setTimeZones(allTimeZones);
 
         // Load saved time zones from localStorage
-        const saved = JSON.parse(localStorage.getItem("timeZones")) || [];
+        const saved = JSON.parse(localStorage.getItem("timeZones") ?? "[]") || [];
         setSavedTimeZones(saved);
     }, []);
 
-    const handleTimeZoneSelect = (event) => {
+    const handleTimeZoneSelect = (event: ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;
         if (!selected) return;
         setSelectedTimeZone(selected);
@@ -30,7 +32,7 @@ const App = () => {
         localStorage.setItem("timeZones", JSON.stringify(updatedTimeZones));
     };
 
-    const handleDeleteTimeZone = (zoneToDelete) => {
+    const handleDeleteTimeZone = (zoneToDelete: string) => {
         // Remove the selected time zone from the saved list
         const updatedTimeZones = savedTimeZones.filter((zone) => zone !== zoneToDelete);
         setSavedTimeZones(updatedTimeZones);
