@@ -22,7 +22,7 @@ const App = () => {
 
         // Load saved time zones from localStorage
         const saved = JSON.parse(localStorage.getItem("timeZones") ?? "{}") || {};
-        if (typeof saved !== "object") {
+        if (typeof saved !== "object" || Array.isArray(saved) || saved === null) {
             localStorage.removeItem("timeZones");
             return;
         }
