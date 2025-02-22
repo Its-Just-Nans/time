@@ -40,17 +40,14 @@ const App = () => {
         if (!selected) return;
         setSelectedTimeZone(selected);
 
-        // Save selected timezone to localStorage
         setSavedTimeZones((savedTimeZones) => {
             const updatedTimeZones = { ...savedTimeZones, [selected]: true };
             localStorage.setItem("timeZones", JSON.stringify(updatedTimeZones));
-            console.log(updatedTimeZones);
             return updatedTimeZones;
         });
     };
 
     const handleDeleteTimeZone = (zoneToDelete: string) => {
-        // Remove the selected time zone from the saved list
         setSavedTimeZones((savedTimeZones) => {
             const { [zoneToDelete]: _none, ...updatedSavedTimeZones } = savedTimeZones;
             localStorage.setItem("timeZones", JSON.stringify(updatedSavedTimeZones));
