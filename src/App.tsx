@@ -1,12 +1,16 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import TimeDisplayer from "./TimeDisplayer";
 
 import "./App.css";
 
+type TimeDisplayerProps = {
+    [key: string]: boolean;
+};
+
 const App = () => {
     const [selectedTimeZone, setSelectedTimeZone] = useState("");
     const [timeZones, setTimeZones] = useState([]);
-    const [savedTimeZones, setSavedTimeZones] = useState<string[]>([]);
+    const [savedTimeZones, setSavedTimeZones] = useState<TimeDisplayerProps>({});
     const [date, setDate] = useState(new Date());
 
     useEffect(() => {
@@ -17,9 +21,15 @@ const App = () => {
         setTimeZones(allTimeZones);
 
         // Load saved time zones from localStorage
-        const saved = JSON.parse(localStorage.getItem("timeZones") ?? "[]") || [];
+        const saved = JSON.parse(localStorage.getItem("timeZones") ?? "{}") || {};
         setSavedTimeZones(saved);
     }, []);
+
+    const filteredTimeZones = useMemo(() => {
+        return timeZones.filter((oneTimeZone) => {
+            return !Object.keys(savedTimeZones).includes(oneTimeZone);
+        });
+    }, [timeZones, savedTimeZones]);
 
     const handleTimeZoneSelect = (event: ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;
@@ -27,16 +37,26 @@ const App = () => {
         setSelectedTimeZone(selected);
 
         // Save selected timezone to localStorage
-        const updatedTimeZones = [...savedTimeZones, selected];
-        setSavedTimeZones(updatedTimeZones);
-        localStorage.setItem("timeZones", JSON.stringify(updatedTimeZones));
+        setSavedTimeZones((savedTimeZones) => {
+            const updatedTimeZones = { ...savedTimeZones, [selected]: true };
+            localStorage.setItem("timeZones", JSON.stringify(updatedTimeZones));
+            console.log(updatedTimeZones);
+            return updatedTimeZones;
+        });
     };
 
     const handleDeleteTimeZone = (zoneToDelete: string) => {
         // Remove the selected time zone from the saved list
-        const updatedTimeZones = savedTimeZones.filter((zone) => zone !== zoneToDelete);
-        setSavedTimeZones(updatedTimeZones);
-        localStorage.setItem("timeZones", JSON.stringify(updatedTimeZones));
+        setSavedTimeZones((savedTimeZones) => {
+            const { [zoneToDelete]: _none, ...updatedSavedTimeZones } = savedTimeZones;
+            localStorage.setItem("timeZones", JSON.stringify(updatedSavedTimeZones));
+            return updatedSavedTimeZones;
+        });
+    };
+
+    const deleteAllTimzZone = () => {
+        localStorage.removeItem("timeZones");
+        setSavedTimeZones({});
     };
 
     const timer = () => setDate(new Date());
@@ -51,20 +71,27 @@ const App = () => {
             <div>
                 <select value={selectedTimeZone} onChange={handleTimeZoneSelect}>
                     <option value="">-- Select a Timezone --</option>
-                    {timeZones.map((timeZone) => (
+                    {filteredTimeZones.map((timeZone) => (
                         <option key={timeZone} value={timeZone}>
                             {timeZone}
                         </option>
                     ))}
                 </select>
+                <button title="Delete all" onClick={deleteAllTimzZone} style={{ marginLeft: "10px", color: "red" }}>
+                    ❌
+                </button>
             </div>
             <br />
 
-            {savedTimeZones.length > 0 ? (
-                savedTimeZones.map((zone) => (
+            {Object.keys(savedTimeZones).length > 0 ? (
+                Object.keys(savedTimeZones).map((zone) => (
                     <div key={zone} className="time-zone">
                         <TimeDisplayer timeZone={zone} date={date} />
-                        <button onClick={() => handleDeleteTimeZone(zone)} style={{ marginLeft: "10px", color: "red" }}>
+                        <button
+                            title={`Remove ${zone}`}
+                            onClick={() => handleDeleteTimeZone(zone)}
+                            style={{ marginLeft: "10px", color: "red" }}
+                        >
                             ❌
                         </button>
                     </div>
